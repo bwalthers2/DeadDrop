@@ -3,38 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create a Dead Drop</title>
+    <title>Stash a Dead Drop</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/web3@1.7.4/dist/web3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </head>
 <body>
-    <div class="background">
-        <div class="neon-glitch"></div>
-        <div class="static-noise"></div>
-    </div>
+    <div class="background"></div>
     <header>
         <div id="walletStatus" class="wallet-status"></div>
     </header>
     <div class="content drop-page">
-        <h1>Create a Dead Drop</h1>
-        <p class="warning">Leave your secrets here. No one will know.</p>
+        <h1>STASH A DROP</h1>
+        <p class="warning">Secure Your Payload.</p>
         <div class="form-container">
-            <input type="text" id="title" placeholder="Title" class="input-field">
-            <textarea id="message" placeholder="Message or Data" class="input-field"></textarea>
-            <input type="number" id="price" placeholder="Price (in Sepolia ETH)" step="0.001" class="input-field">
+            <input type="text" id="title" placeholder="Designation" class="input-field">
+            <textarea id="message" placeholder="Encrypted Payload" class="input-field"></textarea>
+            <input type="number" id="price" placeholder="Access Fee (Sepolia ETH)" step="0.001" class="input-field">
             <div class="visibility-options">
-                <label><input type="radio" name="visibility" value="public" checked> Public</label>
-                <label><input type="radio" name="visibility" value="private"> Private</label>
+                <label><input type="radio" name="visibility" value="public" checked> Public Access</label>
+                <label><input type="radio" name="visibility" value="private"> Restricted</label>
             </div>
-            <input type="text" id="recipient" class="input-field hidden" placeholder="Recipient Address (e.g., 0x...)">
-            <button id="createDrop" class="action-btn">Drop It</button>
+            <input type="text" id="recipient" class="input-field hidden" placeholder="Target Key (0x...)">
+            <button id="createDrop" class="action-btn">Deploy Payload</button>
         </div>
-        <a href="index.html" class="back-btn">Back</a>
+        <a href="index.html" class="back-btn">Abort</a>
     </div>
 
     <script>
-        const contractAddress = "0x8fbe669829527fd46D6b21d8349410cAF88a5C12";
+        const contractAddress = "0x6f6fc1072E098e668574BbaeF6dEe05A7dFD0789";
         const contractABI = [
             {"inputs":[{"internalType":"string","name":"_title","type":"string"},{"internalType":"bytes","name":"_encryptedData","type":"bytes"},{"internalType":"bytes","name":"_encryptedFileCID","type":"bytes"},{"internalType":"uint256","name":"_price","type":"uint256"},{"internalType":"bool","name":"_isPublic","type":"bool"},{"internalType":"address","name":"_recipient","type":"address"}],"name":"createDrop","outputs":[],"stateMutability":"nonpayable","type":"function"},
             {"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"id","type":"uint256"},{"indexed":false,"internalType":"string","name":"title","type":"string"},{"indexed":false,"internalType":"uint256","name":"price","type":"uint256"},{"indexed":false,"internalType":"bool","name":"isPublic","type":"bool"},{"indexed":false,"internalType":"address","name":"recipient","type":"address"},{"indexed":false,"internalType":"uint256","name":"blockNumber","type":"uint256"}],"name":"DropCreated","type":"event"},
@@ -49,7 +46,7 @@
 
         async function checkConnection() {
             if (!localStorage.getItem("walletConnected") || !window.ethereum) {
-                alert("Please connect your wallet first!");
+                alert("Link your key first!");
                 return false;
             }
             if (!web3) {
@@ -64,9 +61,9 @@
             const walletStatus = document.getElementById("walletStatus");
             const connectedAccount = localStorage.getItem("walletConnected");
             if (connectedAccount) {
-                walletStatus.innerHTML = `Connected: ${connectedAccount.slice(0, 6)}...${connectedAccount.slice(-4)}`;
+                walletStatus.innerHTML = `Key: ${connectedAccount.slice(0, 6)}...${connectedAccount.slice(-4)}`;
             } else {
-                walletStatus.innerHTML = `<a href="index.html" class="action-btn">Connect Wallet</a>`;
+                walletStatus.innerHTML = `<a href="index.html" class="action-btn">Link Key</a>`;
             }
         }
 
@@ -101,7 +98,7 @@
             const recipient = isPublic ? "0x0000000000000000000000000000000000000000" : document.getElementById("recipient").value;
 
             if (!title || !message || (!isPublic && !recipient)) {
-                alert("Please fill in all required fields!");
+                alert("Complete all fields to deploy!");
                 return;
             }
 
@@ -116,10 +113,10 @@
 
                 await contract.methods.createDrop(title, encryptedData, encryptedFileCID, price, isPublic, recipient)
                     .send({ from: accounts[0] });
-                alert("Drop created successfully!");
+                alert("Payload deployed.");
             } catch (error) {
-                console.error("Error creating drop:", error);
-                alert("Error creating drop: " + error.message);
+                console.error("Error deploying payload:", error);
+                alert("Deployment failed: " + error.message);
             }
         };
     </script>

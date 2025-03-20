@@ -8,23 +8,20 @@
     <script src="https://cdn.jsdelivr.net/npm/web3@1.7.4/dist/web3.min.js"></script>
 </head>
 <body>
-    <div class="background">
-        <div class="neon-glitch"></div>
-        <div class="static-noise"></div>
-    </div>
+    <div class="background"></div>
     <header>
         <div id="walletStatus" class="wallet-status">
-            <button id="connectWallet" class="action-btn">Connect Wallet</button>
+            <button id="connectWallet" class="action-btn">Link Key</button>
         </div>
     </header>
     <div class="content">
-        <h1>Dead Drop</h1>
-        <p class="warning">A place to bury secrets on the blockchain.</p>
+        <h1>DEAD DROP</h1>
+        <p class="warning">Covert Exchange. Blockchain Secured.</p>
         <div class="button-container">
-            <a href="drop.html" class="action-btn">Create a Drop</a>
-            <a href="unlock.html" class="action-btn">Unlock a Drop</a>
-            <a href="private.html" class="action-btn">Private Drops</a>
-            <a href="created.html" class="action-btn">My Created Drops</a>
+            <a href="drop.html" class="action-btn">Stash a Drop</a>
+            <a href="unlock.html" class="action-btn">Access a Drop</a>
+            <a href="private.html" class="action-btn">Private Stash</a>
+            <a href="created.html" class="action-btn">My Stash</a>
         </div>
     </div>
 
@@ -35,17 +32,17 @@
             const connectButton = document.getElementById("connectWallet");
             if (connectButton) {
                 connectButton.onclick = connectWallet;
-                console.log("Event listener attached to Connect Wallet button");
+                console.log("Event listener attached to Link Key button");
             } else {
-                console.error("Connect Wallet button not found in DOM!");
+                console.error("Link Key button not found in DOM!");
             }
         }
 
         async function connectWallet() {
-            console.log("Connect Wallet clicked");
+            console.log("Link Key clicked");
             if (!window.ethereum) {
                 console.error("MetaMask not detected!");
-                alert("Please install MetaMask to use this feature!");
+                alert("Install MetaMask to access the network!");
                 return;
             }
 
@@ -66,10 +63,10 @@
 
                 localStorage.setItem("walletConnected", accounts[0]);
                 updateWalletStatus();
-                console.log("Wallet connected successfully:", accounts[0]);
+                console.log("Key linked successfully:", accounts[0]);
             } catch (error) {
-                console.error("Error connecting to MetaMask:", error);
-                alert("Failed to connect to MetaMask: " + error.message);
+                console.error("Error linking key:", error);
+                alert("Failed to link key: " + error.message);
             }
         }
 
@@ -77,10 +74,10 @@
             const walletStatus = document.getElementById("walletStatus");
             const connectedAccount = localStorage.getItem("walletConnected");
             if (connectedAccount) {
-                walletStatus.innerHTML = `Connected: ${connectedAccount.slice(0, 6)}...${connectedAccount.slice(-4)}`;
+                walletStatus.innerHTML = `Key: ${connectedAccount.slice(0, 6)}...${connectedAccount.slice(-4)}`;
             } else {
-                walletStatus.innerHTML = `<button id="connectWallet" class="action-btn">Connect Wallet</button>`;
-                attachConnectListener(); // Reattach listener after DOM update
+                walletStatus.innerHTML = `<button id="connectWallet" class="action-btn">Link Key</button>`;
+                attachConnectListener();
             }
         }
 
@@ -107,7 +104,7 @@
                 console.warn("MetaMask not detected on load");
             }
             updateWalletStatus();
-            attachConnectListener(); // Ensure initial button works
+            attachConnectListener();
         });
     </script>
 </body>
