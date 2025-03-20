@@ -1,0 +1,223 @@
+body {
+    margin: 0;
+    font-family: 'Courier New', Courier, monospace;
+    background: #0a0a0a;
+    color: #fff;
+    overflow-x: hidden;
+}
+
+.background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: linear-gradient(45deg, #1a1a1a, #0a0a0a);
+}
+
+.neon-glitch {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.1;
+    background: repeating-linear-gradient(45deg, #ff00ff, #00ffff 10px);
+    animation: glitch 1s infinite;
+}
+
+.static-noise {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.05;
+    background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAJUlEQVQIW2NkwA3+//8/AxJjY2MI8A4D6WNgYGAEELcAcRtQEQBFAwX7r/4G2gAAAABJRU5ErkJggg==') repeat;
+    animation: noise 0.1s infinite;
+}
+
+@keyframes glitch {
+    0% { transform: translate(0, 0); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(2px, -2px); }
+    60% { transform: translate(-2px, 0); }
+    80% { transform: translate(2px, 0); }
+    100% { transform: translate(0, 0); }
+}
+
+@keyframes noise {
+    0% { background-position: 0 0; }
+    100% { background-position: 10px 10px; }
+}
+
+.content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 50px 20px;
+}
+
+h1 {
+    font-size: 3em;
+    text-transform: uppercase;
+    color: #00ffcc;
+    text-shadow: 0 0 10px #00ffcc, 0 0 20px #ff00ff;
+    animation: flicker 2s infinite;
+}
+
+@keyframes flicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+.warning {
+    color: #ff00ff;
+    font-size: 1.2em;
+    margin: 20px 0;
+    text-shadow: 0 0 5px #ff00ff;
+}
+
+.button-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    background: none;
+    border: 2px solid #00ffcc;
+    color: #00ffcc;
+    padding: 10px 20px;
+    font-size: 1.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.action-btn:hover {
+    background: #00ffcc;
+    color: #0a0a0a;
+    box-shadow: 0 0 15px #00ffcc;
+}
+
+.back-btn {
+    display: inline-block;
+    margin-top: 20px;
+    color: #ff00ff;
+    text-decoration: none;
+    font-size: 1em;
+    transition: color 0.3s;
+}
+
+.back-btn:hover {
+    color: #00ffcc;
+}
+
+.drop-page .form-container {
+    max-width: 500px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.input-field {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #00ffcc;
+    color: #fff;
+    padding: 10px;
+    font-size: 1em;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.input-field:focus {
+    border-color: #ff00ff;
+}
+
+.input-field::placeholder {
+    color: #888;
+}
+
+.visibility-options {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    color: #00ffcc;
+}
+
+.visibility-options label {
+    cursor: pointer;
+}
+
+.hidden {
+    display: none;
+}
+
+.unlock-page .blockchain-explorer {
+    max-width: 800px;
+    margin: 20px auto;
+}
+
+.blockchain-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.block {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid #00ffcc;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.block:hover {
+    border-color: #ff00ff;
+    box-shadow: 0 0 10px #ff00ff;
+}
+
+.block h3 {
+    margin: 0;
+    color: #00ffcc;
+}
+
+.block p {
+    margin: 5px 0;
+    color: #fff;
+}
+
+.creator-info {
+    font-size: 0.9em;
+    color: #888;
+}
+
+.drops-list {
+    margin-top: 10px;
+}
+
+.drop {
+    background: #ff00ff;
+    color: #0a0a0a;
+    padding: 5px 10px;
+    display: inline-block;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.drop:hover {
+    background: #00ffcc;
+}
+
+.drop-details {
+    max-width: 500px;
+    margin: 20px auto;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid #00ffcc;
+}

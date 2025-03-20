@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create a Dead Drop</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.7.4/dist/web3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+    <div class="background">
+        <div class="neon-glitch"></div>
+        <div class="static-noise"></div>
+    </div>
+    <div class="content drop-page">
+        <h1>Create a Dead Drop</h1>
+        <p class="warning">Leave your secrets here. No one will know.</p>
+        <div class="form-container">
+            <input type="text" id="title" placeholder="Title" class="input-field">
+            <textarea id="message" placeholder="Message or Data" class="input-field"></textarea>
+            <input type="number" id="price" placeholder="Price (in Sepolia ETH)" step="0.001" class="input-field">
+            <div class="visibility-options">
+                <label><input type="radio" name="visibility" value="public" checked> Public</label>
+                <label><input type="radio" name="visibility" value="private"> Private</label>
+            </div>
+            <input type="text" id="recipient" class="input-field hidden" placeholder="Recipient Address (e.g., 0x...)">
+            <button id="createDrop" class="action-btn">Drop It</button>
+        </div>
+        <a href="index.html" class="back-btn">Back</a>
+    </div>
+
+    <script>
+        const contractAddress = "0x8fbe669829527fd46D6b21d8349410cAF88a5C12";
+        const contractABI = [
+            {"inputs":[{"internalType":"string","name":"_title","type":"string"},{"internalType":"bytes","name":"_encryptedData","type":"bytes"},{"internalType":"bytes","name":"_encryptedFileCID","type":"bytes"},{"internalType":"uint256","name":"_price","type":"uint256"},{"internalType":"bool","name":"_isPublic","type":"bool"},{"internalType":"address","name":"_recipient","type":"address"}],"name":"createDrop","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"id","type":"uint256"},{"indexed":false,"internalType":"string","name":"title","type":"string"},{"indexed":false,"internalType":"uint256","name":"price","type":"uint256"},{"indexed":false,"internalType":"bool","name":"isPublic","type":"bool"},{"indexed":false,"internalType":"address","name":"recipient","type":"address"},{"indexed":false,"internalType":"uint256","name":"blockNumber","type":"uint256"}],"name":"DropCreated","type":"event"},
+            {"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"id","type":"uint256"},{"indexed":false,"internalType":"address","name":"buyer","type":"address"}],"name":"DropUnlocked","type":"event"},
+            {"inputs":[{"internalType":"uint256","name":"_id","type":"uint256"}],"name":"unlockDrop","outputs":[],"stateMutability":"payable","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"_id","type":"uint256"},{"internalType":"address","name":"_user","type":"address"}],"name":"canAccess","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"dropCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"drops","outputs":[{"internalType":"string","name":"title","type":"string"},{"internalType":"bytes","name":"encryptedData","type":"bytes"},{"internalType":"bytes","name":"encryptedFileCID","type":"bytes"},{"internalType":"uint256","name":"price","type":"uint256"},{"internalType":"address","name":"creator","type":"address"},{"internalType":"bool","name":"isPublic","type":"bool"},{"internalType":"address","name":"recipient","type":"address"},{"internalType":"uint256","name":"blockNumber","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"_id","type":"uint256"}],"name":"getDropInfo","outputs":[{"internalType":"string","name":"","type":"string"},{"internalType":"uint256","name":"","type":"uint256"},{"internalType":"bool","name":"","type":"bool"},{"internalType":"address","name":"","type":"address"},{"internalType":"address","name":"","type":"address"},{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}
+        ];
+        let web3, accounts, contract;
+
+        window.addEventListener("load", async () => {
+            if (window.ethereum) {
+                web3 = new Web3(window.ethereum);
+                try {
+                    accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+                    contract = new web3.eth.Contract(contractABI, contractAddress);
+                } catch (error) {
+                    alert("Failed to connect to MetaMask: " + error.message);
+                }
+            } else {
+                alert("Please install MetaMask!");
+            }
+        });
+
+        document.querySelectorAll('input[name="visibility"]').forEach(radio => {
+            radio.addEventListener("change", () => {
+                const recipientField = document.getElementById("recipient");
+                recipientField.classList.toggle("hidden", radio.value === "public");
+            });
+        });
+
+        document.getElementById("createDrop").onclick = async () => {
+            const title = document.getElementById("title").value;
+            const message = document.getElementById("message").value;
+            const price = web3.utils.toWei(document.getElementById("price").value || "0", "ether");
+            const isPublic = document.querySelector('input[name="visibility"]:checked').value === "public";
+            const recipient = isPublic ? "0x0000000000000000000000000000000000000000" : document.getElementById("recipient").value;
+
+            if (!title || !message || (!isPublic && !recipient)) {
+                alert("Please fill in all required fields!");
+                return;
+            }
+
+            try {
+                const aesKey = CryptoJS.lib.WordArray.random(32).toString();
+                const encryptedMessage = CryptoJS.AES.encrypt(message, aesKey).toString();
+                const dropCount = await contract.methods.dropCount().call();
+                const secret = CryptoJS.SHA256(contractAddress + dropCount).toString();
+                const encryptedAesKey = CryptoJS.AES.encrypt(aesKey, secret).toString();
+                const encryptedData = web3.utils.utf8ToHex(encryptedAesKey + "|" + encryptedMessage);
+                const encryptedFileCID = "0x"; // Placeholder, no file upload yet
+
+                await contract.methods.createDrop(title, encryptedData, encryptedFileCID, price, isPublic, recipient)
+                    .send({ from: accounts[0] });
+                alert("Drop created successfully!");
+            } catch (error) {
+                console.error("Error creating drop:", error);
+                alert("Error creating drop: " + error.message);
+            }
+        };
+    </script>
+</body>
+</html>

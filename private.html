@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Private Drops</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.7.4/dist/web3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+    <div class="background">
+        <div class="neon-glitch"></div>
+        <div class="static-noise"></div>
+    </div>
+    <div class="content unlock-page">
+        <h1>Private Drops</h1>
+        <p class="warning">Your secret drops.</p>
+        <div class="blockchain-explorer">
+            <div class="blockchain-container" id="blockchainContainer"></div>
+        </div>
+        <div id="dropDetails" class="drop-details hidden">
+            <h2 id="dropTitle"></h2>
+            <p id="dropContent" class="hidden"></p>
+        </div>
+        <a href="index.html" class="back-btn">Back</a>
+    </div>
+
+    <script>
+        const contractAddress = "0x8fbe669829527fd46D6b21d8349410cAF88a5C12";
+        const contractABI = [
+            {"inputs":[{"internalType":"string","name":"_title","type":"string"},{"internalType":"bytes","name":"_encryptedData","type":"bytes"},{"internalType":"bytes","name":"_encryptedFileCID","type":"bytes"},{"internalType":"uint256","name":"_price","type":"uint256"},{"internalType":"bool","name":"_isPublic","type":"bool"},{"internalType":"address","name":"_recipient","type":"address"}],"name":"createDrop","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"id","type":"uint256"},{"indexed":false,"internalType":"string","name":"title","type":"string"},{"indexed":false,"internalType":"uint256","name":"price","type":"uint256"},{"indexed":false,"internalType":"bool","name":"isPublic","type":"bool"},{"indexed":false,"internalType":"address","name":"recipient","type":"address"},{"indexed":false,"internalType":"uint256","name":"blockNumber","type":"uint256"}],"name":"DropCreated","type":"event"},
+            {"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"id","type":"uint256"},{"indexed":false,"internalType":"address","name":"buyer","type":"address"}],"name":"DropUnlocked","type":"event"},
+            {"inputs":[{"internalType":"uint256","name":"_id","type":"uint256"}],"name":"unlockDrop","outputs":[],"stateMutability":"payable","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"_id","type":"uint256"},{"internalType":"address","name":"_user","type":"address"}],"name":"canAccess","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"dropCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"drops","outputs":[{"internalType":"string","name":"title","type":"string"},{"internalType":"bytes","name":"encryptedData","type":"bytes"},{"internalType":"bytes","name":"encryptedFileCID","type":"bytes"},{"internalType":"uint256","name":"price","type":"uint256"},{"internalType":"address","name":"creator","type":"address"},{"internalType":"bool","name":"isPublic","type":"bool"},{"internalType":"address","name":"recipient","type":"address"},{"internalType":"uint256","name":"blockNumber","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"_id","type":"uint256"}],"name":"getDropInfo","outputs":[{"internalType":"string","name":"","type":"string"},{"internalType":"uint256","name":"","type":"uint256"},{"internalType":"bool","name":"","type":"bool"},{"internalType":"address","name":"","type":"address"},{"internalType":"address","name":"","type":"address"},{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}
+        ];
+        let web3, accounts, contract;
+
+        window.addEventListener("load", async () => {
+            if (window.ethereum) {
+                web3 = new Web3(window.ethereum);
+                try {
+                    accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+                    contract = new web3.eth.Contract(contractABI, contractAddress);
+                    await loadPrivateDrops();
+                } catch (error) {
+                    alert("Failed to connect to MetaMask: " + error.message);
+                }
+            } else {
+                alert("Please install MetaMask!");
+            }
+        });
+
+        async function loadPrivateDrops() {
+            try {
+                const container = document.getElementById("blockchainContainer");
+                container.innerHTML = "";
+                const dropCount = await contract.methods.dropCount().call();
+
+                for (let i = 0; i < dropCount; i++) {
+                    const dropInfo = await contract.methods.getDropInfo(i).call();
+                    const [title, price, isPublic, recipient, creator, blockNumber] = Array.isArray(dropInfo) ? dropInfo : Object.values(dropInfo);
+                    if (recipient.toLowerCase() === accounts[0].toLowerCase() && !isPublic) {
+                        const block = document.createElement("div");
+                        block.classList.add("block");
+                        block.dataset.id = i;
+                        block.innerHTML = `
+                            <h3>Block ${blockNumber}</h3>
+                            <p>${title}</p>
+                            <p class="creator-info">From: ${creator.slice(0, 6)}...${creator.slice(-4)}</p>
+                            <div class="drops-list"><div class="drop" data-id="${i}">View</div></div>
+                        `;
+                        container.appendChild(block);
+                    }
+                }
+
+                document.querySelectorAll(".block").forEach(block => {
+                    block.addEventListener("click", () => {
+                        const dropsList = block.querySelector(".drops-list");
+                        dropsList.classList.toggle("hidden");
+                    });
+                });
+
+                document.querySelectorAll(".drop").forEach(drop => {
+                    drop.addEventListener("click", async () => {
+                        const id = drop.dataset.id;
+                        const dropInfo = await contract.methods.getDropInfo(id).call();
+                        const [title] = Array.isArray(dropInfo) ? dropInfo : Object.values(dropInfo);
+                        document.getElementById("dropTitle").innerText = title;
+                        document.getElementById("dropDetails").dataset.id = id;
+                        await showDropContent(id);
+                        document.getElementById("dropDetails").classList.remove("hidden");
+                    });
+                });
+            } catch (error) {
+                console.error("Error loading private drops:", error);
+                document.getElementById("blockchainContainer").innerHTML = "<p>Error loading private drops: " + error.message + "</p>";
+            }
+        }
+
+        async function showDropContent(id) {
+            const drop = await contract.methods.drops(id).call();
+            const secret = CryptoJS.SHA256(contractAddress + id).toString();
+            const encryptedData = web3.utils.hexToUtf8(drop.encryptedData);
+            const [encryptedAesKey, encryptedMessage] = encryptedData.split("|");
+            const aesKey = CryptoJS.AES.decrypt(encryptedAesKey, secret).toString(CryptoJS.enc.Utf8);
+            const decryptedMessage = CryptoJS.AES.decrypt(encryptedMessage, aesKey).toString(CryptoJS.enc.Utf8);
+            document.getElementById("dropContent").innerText = decryptedMessage || "No message";
+            document.getElementById("dropContent").classList.remove("hidden");
+        }
+    </script>
+</body>
+</html>
