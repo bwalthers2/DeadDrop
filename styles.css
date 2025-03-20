@@ -1,9 +1,11 @@
-body {
+html, body {
     margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
     font-family: 'Courier New', Courier, monospace;
     background: #111;
     color: #cccccc;
-    overflow-x: hidden;
 }
 
 .background {
@@ -46,11 +48,11 @@ header {
     position: relative;
     z-index: 1;
     text-align: center;
-    padding: 100px 40px;
-    min-height: 100vh;
+    height: 100vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-items: center;
 }
 
 h1 {
@@ -59,12 +61,13 @@ h1 {
     color: #00b7b7;
     text-shadow: 0 0 10px #00b7b7;
     letter-spacing: 3px;
+    margin: 0;
 }
 
 .warning {
     color: #cccccc;
     font-size: 1.8em;
-    margin: 40px 0;
+    margin: 20px 0;
     text-shadow: 0 0 5px #cccccc;
 }
 
@@ -96,7 +99,7 @@ h1 {
 
 .back-btn {
     display: inline-block;
-    margin-top: 40px;
+    margin-top: 20px;
     color: #cccccc;
     text-decoration: none;
     font-size: 1.5em;
@@ -110,7 +113,7 @@ h1 {
 
 .drop-page .form-container {
     max-width: 800px;
-    margin: 0 auto;
+    margin: 20px auto;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -152,7 +155,9 @@ h1 {
 
 .unlock-page .blockchain-explorer {
     max-width: 1200px;
-    margin: 40px auto;
+    margin: 20px auto;
+    flex-grow: 1;
+    overflow-y: auto;
 }
 
 .blockchain-container {
@@ -211,7 +216,7 @@ h1 {
 
 .drop-details {
     max-width: 800px;
-    margin: 40px auto;
+    margin: 20px auto;
     padding: 30px;
     background: rgba(255, 255, 255, 0.03);
     border: 2px solid #00b7b7;

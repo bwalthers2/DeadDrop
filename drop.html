@@ -24,29 +24,31 @@
                 <label><input type="radio" name="visibility" value="public" checked> Public Access</label>
                 <label><input type="radio" name="visibility" value="private"> Restricted</label>
             </div>
-            <input type="text" id="recipient" class="input-field hidden" placeholder="Target Key (0x...)">
+            <input type="text" id="recipient" class="input-field hidden" placeholder="Target Wallet (0x...)">
             <button id="createDrop" class="action-btn">Deploy Payload</button>
         </div>
         <a href="index.html" class="back-btn">Abort</a>
     </div>
 
     <script>
-        const contractAddress = "0x6f6fc1072E098e668574BbaeF6dEe05A7dFD0789";
+        const contractAddress = "0x01C57FC382cF7a1675Fd2dEB82dc568d75cc568e";
         const contractABI = [
             {"inputs":[{"internalType":"string","name":"_title","type":"string"},{"internalType":"bytes","name":"_encryptedData","type":"bytes"},{"internalType":"bytes","name":"_encryptedFileCID","type":"bytes"},{"internalType":"uint256","name":"_price","type":"uint256"},{"internalType":"bool","name":"_isPublic","type":"bool"},{"internalType":"address","name":"_recipient","type":"address"}],"name":"createDrop","outputs":[],"stateMutability":"nonpayable","type":"function"},
             {"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"id","type":"uint256"},{"indexed":false,"internalType":"string","name":"title","type":"string"},{"indexed":false,"internalType":"uint256","name":"price","type":"uint256"},{"indexed":false,"internalType":"bool","name":"isPublic","type":"bool"},{"indexed":false,"internalType":"address","name":"recipient","type":"address"},{"indexed":false,"internalType":"uint256","name":"blockNumber","type":"uint256"}],"name":"DropCreated","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"id","type":"uint256"},{"indexed":false,"internalType":"address","name":"buyer","type":"address"}],"name":"DropUnlocked","type":"event"},
+            {"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"id","type":"uint256"},{"indexed":false,"internalType":"address","name":"buyer","type":"address"},{"indexed":false,"internalType":"uint256","name":"creatorAmount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"feeAmount","type":"uint256"}],"name":"DropUnlocked","type":"event"},
             {"inputs":[{"internalType":"uint256","name":"_id","type":"uint256"}],"name":"unlockDrop","outputs":[],"stateMutability":"payable","type":"function"},
             {"inputs":[{"internalType":"uint256","name":"_id","type":"uint256"},{"internalType":"address","name":"_user","type":"address"}],"name":"canAccess","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
             {"inputs":[],"name":"dropCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
             {"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"drops","outputs":[{"internalType":"string","name":"title","type":"string"},{"internalType":"bytes","name":"encryptedData","type":"bytes"},{"internalType":"bytes","name":"encryptedFileCID","type":"bytes"},{"internalType":"uint256","name":"price","type":"uint256"},{"internalType":"address","name":"creator","type":"address"},{"internalType":"bool","name":"isPublic","type":"bool"},{"internalType":"address","name":"recipient","type":"address"},{"internalType":"uint256","name":"blockNumber","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[{"internalType":"uint256","name":"_id","type":"uint256"}],"name":"getDropInfo","outputs":[{"internalType":"string","name":"","type":"string"},{"internalType":"uint256","name":"","type":"uint256"},{"internalType":"bool","name":"","type":"bool"},{"internalType":"address","name":"","type":"address"},{"internalType":"address","name":"","type":"address"},{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}
+            {"inputs":[{"internalType":"uint256","name":"_id","type":"uint256"}],"name":"getDropInfo","outputs":[{"internalType":"string","name":"","type":"string"},{"internalType":"uint256","name":"","type":"uint256"},{"internalType":"bool","name":"","type":"bool"},{"internalType":"address","name":"","type":"address"},{"internalType":"address","name":"","type":"address"},{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"feeRecipient","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"FEE_PERCENTAGE","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}
         ];
         let web3, accounts, contract;
 
         async function checkConnection() {
             if (!localStorage.getItem("walletConnected") || !window.ethereum) {
-                alert("Link your key first!");
+                alert("Connect your wallet first!");
                 return false;
             }
             if (!web3) {
@@ -61,9 +63,9 @@
             const walletStatus = document.getElementById("walletStatus");
             const connectedAccount = localStorage.getItem("walletConnected");
             if (connectedAccount) {
-                walletStatus.innerHTML = `Key: ${connectedAccount.slice(0, 6)}...${connectedAccount.slice(-4)}`;
+                walletStatus.innerHTML = `Wallet: ${connectedAccount.slice(0, 6)}...${connectedAccount.slice(-4)}`;
             } else {
-                walletStatus.innerHTML = `<a href="index.html" class="action-btn">Link Key</a>`;
+                walletStatus.innerHTML = `<a href="index.html" class="action-btn">Connect Wallet</a>`;
             }
         }
 

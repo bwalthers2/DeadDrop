@@ -11,7 +11,7 @@
     <div class="background"></div>
     <header>
         <div id="walletStatus" class="wallet-status">
-            <button id="connectWallet" class="action-btn">Link Key</button>
+            <button id="connectWallet" class="action-btn">Connect Wallet</button>
         </div>
     </header>
     <div class="content">
@@ -32,17 +32,17 @@
             const connectButton = document.getElementById("connectWallet");
             if (connectButton) {
                 connectButton.onclick = connectWallet;
-                console.log("Event listener attached to Link Key button");
+                console.log("Event listener attached to Connect Wallet button");
             } else {
-                console.error("Link Key button not found in DOM!");
+                console.error("Connect Wallet button not found in DOM!");
             }
         }
 
         async function connectWallet() {
-            console.log("Link Key clicked");
+            console.log("Connect Wallet clicked");
             if (!window.ethereum) {
                 console.error("MetaMask not detected!");
-                alert("Install MetaMask to access the network!");
+                alert("Install MetaMask to connect your wallet!");
                 return;
             }
 
@@ -63,10 +63,10 @@
 
                 localStorage.setItem("walletConnected", accounts[0]);
                 updateWalletStatus();
-                console.log("Key linked successfully:", accounts[0]);
+                console.log("Wallet connected successfully:", accounts[0]);
             } catch (error) {
-                console.error("Error linking key:", error);
-                alert("Failed to link key: " + error.message);
+                console.error("Error connecting wallet:", error);
+                alert("Failed to connect wallet: " + error.message);
             }
         }
 
@@ -74,9 +74,9 @@
             const walletStatus = document.getElementById("walletStatus");
             const connectedAccount = localStorage.getItem("walletConnected");
             if (connectedAccount) {
-                walletStatus.innerHTML = `Key: ${connectedAccount.slice(0, 6)}...${connectedAccount.slice(-4)}`;
+                walletStatus.innerHTML = `Wallet: ${connectedAccount.slice(0, 6)}...${connectedAccount.slice(-4)}`;
             } else {
-                walletStatus.innerHTML = `<button id="connectWallet" class="action-btn">Link Key</button>`;
+                walletStatus.innerHTML = `<button id="connectWallet" class="action-btn">Connect Wallet</button>`;
                 attachConnectListener();
             }
         }
