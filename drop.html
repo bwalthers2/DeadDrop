@@ -13,6 +13,9 @@
         <div class="neon-glitch"></div>
         <div class="static-noise"></div>
     </div>
+    <header>
+        <div id="walletStatus" class="wallet-status"></div>
+    </header>
     <div class="content drop-page">
         <h1>Create a Dead Drop</h1>
         <p class="warning">Leave your secrets here. No one will know.</p>
@@ -44,17 +47,40 @@
         ];
         let web3, accounts, contract;
 
-        window.addEventListener("load", async () => {
-            if (window.ethereum) {
+        async function checkConnection() {
+            if (!localStorage.getItem("walletConnected") || !window.ethereum) {
+                alert("Please connect your wallet first!");
+                return false;
+            }
+            if (!web3) {
                 web3 = new Web3(window.ethereum);
-                try {
-                    accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-                    contract = new web3.eth.Contract(contractABI, contractAddress);
-                } catch (error) {
-                    alert("Failed to connect to MetaMask: " + error.message);
-                }
+                accounts = await window.ethereum.request({ method: "eth_accounts" });
+                contract = new web3.eth.Contract(contractABI, contractAddress);
+            }
+            return true;
+        }
+
+        function updateWalletStatus() {
+            const walletStatus = document.getElementById("walletStatus");
+            const connectedAccount = localStorage.getItem("walletConnected");
+            if (connectedAccount) {
+                walletStatus.innerHTML = `Connected: ${connectedAccount.slice(0, 6)}...${connectedAccount.slice(-4)}`;
             } else {
-                alert("Please install MetaMask!");
+                walletStatus.innerHTML = `<a href="index.html" class="action-btn">Connect Wallet</a>`;
+            }
+        }
+
+        window.addEventListener("load", () => {
+            updateWalletStatus();
+            if (window.ethereum) {
+                window.ethereum.on("accountsChanged", (newAccounts) => {
+                    if (newAccounts.length > 0) {
+                        localStorage.setItem("walletConnected", newAccounts[0]);
+                    } else {
+                        localStorage.removeItem("walletConnected");
+                    }
+                    updateWalletStatus();
+                });
             }
         });
 
@@ -66,6 +92,8 @@
         });
 
         document.getElementById("createDrop").onclick = async () => {
+            if (!await checkConnection()) return;
+
             const title = document.getElementById("title").value;
             const message = document.getElementById("message").value;
             const price = web3.utils.toWei(document.getElementById("price").value || "0", "ether");
@@ -84,7 +112,7 @@
                 const secret = CryptoJS.SHA256(contractAddress + dropCount).toString();
                 const encryptedAesKey = CryptoJS.AES.encrypt(aesKey, secret).toString();
                 const encryptedData = web3.utils.utf8ToHex(encryptedAesKey + "|" + encryptedMessage);
-                const encryptedFileCID = "0x"; // Placeholder, no file upload yet
+                const encryptedFileCID = "0x";
 
                 await contract.methods.createDrop(title, encryptedData, encryptedFileCID, price, isPublic, recipient)
                     .send({ from: accounts[0] });

@@ -13,11 +13,14 @@
         <div class="neon-glitch"></div>
         <div class="static-noise"></div>
     </div>
+    <header>
+        <div id="walletStatus" class="wallet-status"></div>
+    </header>
     <div class="content unlock-page">
         <h1>Unlock a Dead Drop</h1>
         <p class="warning">Find what’s buried. Pay the price.</p>
         <div class="blockchain-explorer">
-            <div class="blockchain-container" id="blockchainContainer"></div>
+            <div class="blockchain-container" id="blockchainContainer"><p>Connect wallet to load drops...</p></div>
         </div>
         <div id="dropDetails" class="drop-details hidden">
             <h2 id="dropTitle"></h2>
@@ -42,42 +45,42 @@
         ];
         let web3, accounts, contract;
 
-        window.addEventListener("load", async () => {
-            if (window.ethereum) {
+        async function checkConnection() {
+            if (!localStorage.getItem("walletConnected") || !window.ethereum) {
+                alert("Please connect your wallet first!");
+                return false;
+            }
+            if (!web3) {
                 web3 = new Web3(window.ethereum);
-                try {
-                    accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-                    contract = new web3.eth.Contract(contractABI, contractAddress);
-                    console.log("Connected to MetaMask, loading drops...");
-                    await loadDrops();
+                accounts = await window.ethereum.request({ method: "eth_accounts" });
+                contract = new web3.eth.Contract(contractABI, contractAddress);
+            }
+            return true;
+        }
 
-                    document.getElementById("unlockDrop").onclick = async () => {
-                        if (!contract) {
-                            console.error("Contract not initialized!");
-                            alert("Contract not initialized. Please refresh the page.");
-                            return;
-                        }
-                        const id = document.getElementById("dropDetails").dataset.id;
-                        try {
-                            console.log(`Unlocking drop ${id}...`);
-                            const drop = await contract.methods.drops(id).call();
-                            const price = drop.price || drop[3];
-                            console.log(`Price for drop ${id}: ${price}`);
-                            await contract.methods.unlockDrop(id).send({ from: accounts[0], value: price });
-                            console.log(`Drop ${id} unlocked on-chain`);
-                            await showDropContent(id);
-                            await loadDrops();
-                        } catch (error) {
-                            console.error("Error unlocking drop:", error);
-                            alert("Error unlocking drop: " + error.message);
-                        }
-                    };
-                } catch (error) {
-                    console.error("Error initializing:", error);
-                    alert("Failed to connect to MetaMask: " + error.message);
-                }
+        function updateWalletStatus() {
+            const walletStatus = document.getElementById("walletStatus");
+            const connectedAccount = localStorage.getItem("walletConnected");
+            if (connectedAccount) {
+                walletStatus.innerHTML = `Connected: ${connectedAccount.slice(0, 6)}...${connectedAccount.slice(-4)}`;
             } else {
-                alert("Please install MetaMask!");
+                walletStatus.innerHTML = `<a href="index.html" class="action-btn">Connect Wallet</a>`;
+            }
+        }
+
+        window.addEventListener("load", async () => {
+            updateWalletStatus();
+            if (window.ethereum) {
+                window.ethereum.on("accountsChanged", (newAccounts) => {
+                    if (newAccounts.length > 0) {
+                        localStorage.setItem("walletConnected", newAccounts[0]);
+                    } else {
+                        localStorage.removeItem("walletConnected");
+                    }
+                    updateWalletStatus();
+                    if (newAccounts.length > 0) loadDrops();
+                });
+                if (await checkConnection()) loadDrops();
             }
         });
 
@@ -85,9 +88,9 @@
             try {
                 console.log("Starting loadDrops...");
                 const container = document.getElementById("blockchainContainer");
-                container.innerHTML = "";
+                container.innerHTML = "<p>Loading drops...</p>";
                 const dropCount = await contract.methods.dropCount().call();
-                console.log("Drop count:", dropCount);
+                container.innerHTML = "";
 
                 if (dropCount == 0) {
                     container.innerHTML = "<p>No drops available yet.</p>";
@@ -122,6 +125,7 @@
 
                 document.querySelectorAll(".drop").forEach(drop => {
                     drop.addEventListener("click", async () => {
+                        if (!await checkConnection()) return;
                         const id = drop.dataset.id;
                         const dropInfo = await contract.methods.getDropInfo(id).call();
                         const [title, price] = Array.isArray(dropInfo) ? dropInfo : Object.values(dropInfo);
@@ -143,20 +147,39 @@
         }
 
         async function showDropContent(id) {
-            const drop = await contract.methods.drops(id).call();
-            const secret = CryptoJS.SHA256(contractAddress + id).toString();
-            const encryptedData = web3.utils.hexToUtf8(drop.encryptedData);
-            const [encryptedAesKey, encryptedMessage] = encryptedData.split("|");
-            const aesKey = CryptoJS.AES.decrypt(encryptedAesKey, secret).toString(CryptoJS.enc.Utf8);
-            const decryptedMessage = CryptoJS.AES.decrypt(encryptedMessage, aesKey).toString(CryptoJS.enc.Utf8);
-            document.getElementById("dropContent").innerText = decryptedMessage || "No message";
-            document.getElementById("dropContent").classList.remove("hidden");
+            try {
+                const drop = await contract.methods.drops(id).call();
+                const secret = CryptoJS.SHA256(contractAddress + id).toString();
+                const encryptedData = web3.utils.hexToUtf8(drop.encryptedData);
+                const [encryptedAesKey, encryptedMessage] = encryptedData.split("|");
+                const aesKey = CryptoJS.AES.decrypt(encryptedAesKey, secret).toString(CryptoJS.enc.Utf8);
+                const decryptedMessage = CryptoJS.AES.decrypt(encryptedMessage, aesKey).toString(CryptoJS.enc.Utf8);
+                document.getElementById("dropContent").innerText = decryptedMessage || "No message";
+                document.getElementById("dropContent").classList.remove("hidden");
+            } catch (error) {
+                console.error("Error showing drop content:", error);
+                document.getElementById("dropContent").innerText = "Error decrypting message: " + error.message;
+                document.getElementById("dropContent").classList.remove("hidden");
+            }
         }
 
-        setInterval(async () => {
-            console.log("Running live update...");
-            await loadDrops();
-        }, 10000);
+        document.getElementById("unlockDrop").onclick = async () => {
+            if (!await checkConnection()) return;
+            const id = document.getElementById("dropDetails").dataset.id;
+            try {
+                console.log(`Unlocking drop ${id}...`);
+                const drop = await contract.methods.drops(id).call();
+                const price = drop.price || drop[3];
+                console.log(`Price for drop ${id}: ${price}`);
+                await contract.methods.unlockDrop(id).send({ from: accounts[0], value: price });
+                console.log(`Drop ${id} unlocked on-chain`);
+                await showDropContent(id);
+                await loadDrops();
+            } catch (error) {
+                console.error("Error unlocking drop:", error);
+                alert("Error unlocking drop: " + error.message);
+            }
+        };
     </script>
 </body>
 </html>

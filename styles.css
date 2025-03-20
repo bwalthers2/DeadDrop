@@ -52,6 +52,24 @@ body {
     100% { background-position: 10px 10px; }
 }
 
+header {
+    position: fixed;
+    top: 0;
+    right: 0;
+    padding: 10px 20px;
+    z-index: 2;
+}
+
+.wallet-status {
+    color: #00ffcc;
+    font-size: 1em;
+}
+
+.wallet-status .action-btn {
+    font-size: 0.9em;
+    padding: 5px 10px;
+}
+
 .content {
     position: relative;
     z-index: 1;
